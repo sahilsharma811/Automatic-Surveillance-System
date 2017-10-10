@@ -62,9 +62,8 @@ def start_surveillance(sender,receives,password):
 
 
 if __name__ == '__main__':
-    sender = 'automaticsurveillance@gmail.com'
-    #receivers=input('Enter the Receiver Email_address: ')
-    receivers = ['sahil8sharma8@gmail.com', 'sneh.rathore96@gmail.com', 'parthbhasin96@gmail.com']
-    password = getpass.getpass("Password:")
+    sender = 'sender email address'
+    receivers = ['receives1@gmail.com', 'receivers2@gmail.com']
+    password = getpass.getpass("Password:") # Sender's Password
     start_surveillance(sender,receivers,password)  
     
