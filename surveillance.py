@@ -4,7 +4,7 @@ from datetime import datetime
 import getpass
 from sendemail import email
 
-def start_surveillance(sender,receives,password):
+def start_surveillance(sender,receivers,password):
     mail_obj = email()
     mail_obj.configure(sender,password)
 
@@ -18,9 +18,10 @@ def start_surveillance(sender,receives,password):
 
     # Initializations for saving the video!
     fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-    out = cv2.VideoWriter('output.mp4',fourcc, 15.0, (640,480))
+    detected_out = cv2.VideoWriter('detected.mp4',fourcc, 15.0, (640,480))
+    full_out = cv2.VideoWriter('full_video.mp4',fourcc, 15.0, (640,480))
     cap = cv2.VideoCapture()
-    cap.open(0)
+    cap.open(0) # pass 0 for inbuilt camera, pass 1 for external camera 
     count = 0
     lst = []
     while 1:
@@ -28,7 +29,7 @@ def start_surveillance(sender,receives,password):
         ret, img = cap.read()
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         face = face_cascade.detectMultiScale(gray, 1.3, 5)
-        print(face)
+        full_out.write(img)
         for (x,y,w,h) in face:
             status=1
             cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),3)
@@ -37,7 +38,7 @@ def start_surveillance(sender,receives,password):
             eyes = eye_cascade.detectMultiScale(roi_gray)
             for (ex,ey,ew,eh) in eyes:
                 cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,0,255),1)
-            out.write(img) 
+            detected_out.write(img) 
             cv2.imwrite("frame%d.jpg" % count, img)
             count+=1
 
@@ -45,7 +46,7 @@ def start_surveillance(sender,receives,password):
             for i in range(count):
                 lst.append('frame'+str(i)+'.jpg')
             print(lst)
-            mail_obj.send_email(sender,lst,receivers,'Alert!!')             
+            mail_obj.send_email(sender,lst,receivers,'Alert! Snapshots')             
 
         status_list.append(status)
         status_list=status_list[-2:]
@@ -68,14 +69,15 @@ def start_surveillance(sender,receives,password):
         df=df.append({"Start":times[i],"End":times[i+1]},ignore_index=True)
     df.to_csv("Times.csv")
     cap.release()
-    out.release()
+    detected_out.release()
+    full_out.release()
+    lst = ['detected.mp4','full_video.mp4']
+    mail_obj.send_email(sender,lst,receivers,'Video Alert')
     cv2.destroyAllWindows()
-    #send_email(sender,password,receivers,'First Alert')
-
 
 if __name__ == '__main__':
     sender = 'sender_email_address'
-    receivers = ['sahil8sharma8@gmail.com','receiver_email_address','receiver_email_address']
-    password = getpass.getpass("Password:") # Sender's Password
+    receivers = ['sahil8sharma8@gmail.com']
+    password = getpass.getpass("Password:") # Sender's Email Password
     start_surveillance(sender,receivers,password)  
     
