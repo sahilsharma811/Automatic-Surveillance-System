@@ -3,10 +3,10 @@ import cv2, time, pandas
 from datetime import datetime
 import getpass
 from sendemail import email
+from multiprocessing import Process
 
 def start_surveillance(sender,receivers,password):
     mail_obj = email()
-    mail_obj.configure(sender,password)
 
     face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
     eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
@@ -21,7 +21,7 @@ def start_surveillance(sender,receivers,password):
     detected_out = cv2.VideoWriter('detected.mp4',fourcc, 15.0, (640,480))
     full_out = cv2.VideoWriter('full_video.mp4',fourcc, 15.0, (640,480))
     cap = cv2.VideoCapture()
-    cap.open(0) # pass 0 for inbuilt camera, pass 1 for external camera 
+    cap.open(1) # pass 1 for inbuilt camera, pass 0 for external camera 
     count = 0
     lst = []
     while 1:
@@ -43,10 +43,12 @@ def start_surveillance(sender,receivers,password):
             count+=1
 
         if status!=0:
+            lst=[]
             for i in range(count):
                 lst.append('frame'+str(i)+'.jpg')
             print(lst)
-            mail_obj.send_email(sender,lst,receivers,'Alert! Snapshots')             
+            my_process = Process(target=mail_obj.send_email, args=(sender,password,lst,receivers,'Alert! Snapshots'))
+            my_process.start()             
 
         status_list.append(status)
         status_list=status_list[-2:]
@@ -61,10 +63,10 @@ def start_surveillance(sender,receivers,password):
 
         k = cv2.waitKey(1)
         if k==ord('q'):
+            my_process.terminate()
             if status==1:
                 times.append(datetime.now())
-            break
-        
+            break    
     for i in range(0,len(times),2):
         df=df.append({"Start":times[i],"End":times[i+1]},ignore_index=True)
     df.to_csv("Times.csv")
@@ -72,12 +74,12 @@ def start_surveillance(sender,receivers,password):
     detected_out.release()
     full_out.release()
     lst = ['detected.mp4','full_video.mp4']
-    mail_obj.send_email(sender,lst,receivers,'Video Alert')
     cv2.destroyAllWindows()
-
+    if count!=0:
+        mail_obj.send_email(sender,password,lst,receivers,'Video Alert')
+    
 if __name__ == '__main__':
-    sender = 'sender_email_address'
-    receivers = ['sahil8sharma8@gmail.com']
+    sender = 'automaticsurveillance@gmail.com'
+    receivers = ['sahil8sharma8@gmail.com']#,'sneh.rathore96@gmail.com','parthbhasin96@gmail.com']
     password = getpass.getpass("Password:") # Sender's Email Password
     start_surveillance(sender,receivers,password)  
-    

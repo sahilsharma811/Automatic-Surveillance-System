@@ -9,7 +9,10 @@ class email():
 		self.server.starttls()
 		self.server.login(sender, password)
 
-	def send_email(self,sender,argv,receivers='sahil8sharma8@gmail.com', subject='Alert! Intrution Detected'):
+	def send_email(self,sender,password,argv,receivers='sahil8sharma8@gmail.com', subject='Alert! Intrution Detected'):
+		server = smtplib.SMTP('smtp.gmail.com', 587)
+		server.starttls()
+		server.login(sender, password)
 		COMMASPACE = ', '
 		msg = MIMEMultipart()
 		msg['From'] = sender
@@ -31,8 +34,8 @@ class email():
 
 	# Configuring Server
 		text = msg.as_string()
-		self.server.sendmail(sender, receivers, text)
+		server.sendmail(sender, receivers, text)
 		#server.quit()
 if __name__=='__main__':
 	obj = email()
-	obj.configure()
+	
